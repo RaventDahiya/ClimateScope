@@ -16,6 +16,7 @@ final class WeatherDataModel {
     required this.timezone,
     required this.lastUpdated,
     this.cacheVersion = 1,
+    this.isFromCache = false,
   });
 
   /// Current weather conditions.
@@ -38,6 +39,9 @@ final class WeatherDataModel {
 
   /// Schema version for cache migration. Increment when model fields change.
   final int cacheVersion;
+
+  /// Whether this data was retrieved from local offline cache.
+  final bool isFromCache;
 
   /// Creates a [WeatherDataModel] from a raw Open-Meteo forecast API response.
   ///
@@ -135,6 +139,30 @@ final class WeatherDataModel {
           ) ??
           DateTime.now(),
       cacheVersion: version,
+      isFromCache: true,
+    );
+  }
+
+  /// Creates a copy of this [WeatherDataModel] with optional fields replaced.
+  WeatherDataModel copyWith({
+    CurrentWeatherModel? current,
+    List<DailyForecastModel>? dailyForecasts,
+    List<HourlyForecastModel>? hourlyForecasts,
+    CityModel? city,
+    String? timezone,
+    DateTime? lastUpdated,
+    int? cacheVersion,
+    bool? isFromCache,
+  }) {
+    return WeatherDataModel(
+      current: current ?? this.current,
+      dailyForecasts: dailyForecasts ?? this.dailyForecasts,
+      hourlyForecasts: hourlyForecasts ?? this.hourlyForecasts,
+      city: city ?? this.city,
+      timezone: timezone ?? this.timezone,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      cacheVersion: cacheVersion ?? this.cacheVersion,
+      isFromCache: isFromCache ?? this.isFromCache,
     );
   }
 

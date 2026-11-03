@@ -10,6 +10,7 @@ import 'widgets/empty_state.dart';
 import 'widgets/error_state.dart';
 import 'widgets/loading_state.dart';
 import 'widgets/metric_cards_row.dart';
+import 'widgets/offline_banner.dart';
 import 'widgets/weather_header.dart';
 import 'widgets/weather_hero.dart';
 
@@ -37,6 +38,7 @@ class WeatherScreen extends ConsumerWidget {
                     AppStrings.appName,
                 dateTime: weatherAsync.valueOrNull?.lastUpdated ?? DateTime.now(),
                 onTapCity: () => SearchBottomSheet.show(context),
+                isLastUpdated: weatherAsync.valueOrNull?.isFromCache ?? false,
               ),
               const Expanded(
                 child: LoadingState(),
@@ -51,6 +53,7 @@ class WeatherScreen extends ConsumerWidget {
                     AppStrings.appName,
                 dateTime: weatherAsync.valueOrNull?.lastUpdated ?? DateTime.now(),
                 onTapCity: () => SearchBottomSheet.show(context),
+                isLastUpdated: weatherAsync.valueOrNull?.isFromCache ?? false,
               ),
               Expanded(
                 child: ErrorState(
@@ -95,8 +98,15 @@ class WeatherScreen extends ConsumerWidget {
                     cityName: weather.city.name,
                     dateTime: weather.lastUpdated,
                     onTapCity: () => SearchBottomSheet.show(context),
+                    isLastUpdated: weather.isFromCache,
                   ),
                 ),
+                if (weather.isFromCache)
+                  SliverToBoxAdapter(
+                    child: OfflineBanner(
+                      lastUpdated: weather.lastUpdated,
+                    ),
+                  ),
                 SliverToBoxAdapter(
                   child: WeatherHero(
                     weatherCode: weather.current.weatherCode,

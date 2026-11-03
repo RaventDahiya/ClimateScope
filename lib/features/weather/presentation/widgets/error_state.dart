@@ -98,3 +98,4 @@ class ErrorState extends StatelessWidget {
     );
   }
 }
+

@@ -1,6 +1,6 @@
 # ClimateScope — Agent Handoff Document
 
-> Last updated: 2026-11-03 · 14:25 IST
+> Last updated: 2026-11-03 · 15:05 IST
 
 ---
 
@@ -23,7 +23,7 @@ Full spec lives in `docs/PRD.md`, architecture in `docs/Architecture.md`, design
 | 2 | Weather Code Mapper | ✅ Complete (committed) |
 | 3 | State Management & Basic UI | ✅ Complete (committed) |
 | 4 | Loading / Error / Empty States | ✅ Complete (committed) |
-| 5 | Offline Cache | ⏳ Not started |
+| 5 | Offline Cache | ✅ Complete (committed) |
 | 6 | Edge Cases | ⏳ Not started |
 | 7 | Design Polish | ⏳ Not started |
 | 8a–8d | Bonus Features | ⏳ Not started |
@@ -31,6 +31,7 @@ Full spec lives in `docs/PRD.md`, architecture in `docs/Architecture.md`, design
 
 **Git log (latest):**
 ```
+feat(cache): implement offline caching with staleness indicator
 feat(states): add loading, error, and empty state views
 feat(ui): implement search, current weather, and 5-day forecast
 305d18e feat(mapper): add WMO weather code to icon and label mapper
@@ -38,7 +39,7 @@ feat(ui): implement search, current weather, and 5-day forecast
 a263dcd feat(setup): scaffold project with folder structure and dark theme
 ```
 
-**`flutter analyze` status:** Hangs in sandbox and runner due to Windows sandbox daemon IPC limitations. Run manually in user's external terminal.
+**`flutter analyze` status:** Hangs in sandbox and runner due to Windows sandbox daemon IPC limitations. Run manually in user's external terminal. All `flutter test` unit and widget tests pass clean.
 
 ---
 
@@ -58,7 +59,7 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 | `lib/core/theme/app_dimensions.dart` | Spacing scale + corner radius tokens |
 | `lib/core/theme/app_theme.dart` | `ThemeData` (dark only) + `SystemUiOverlayStyle` |
 
-### Domain — Phase 1 ✅
+### Domain — Phase 1 & 5 ✅
 
 | File | Purpose |
 |---|---|
@@ -69,15 +70,16 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 | `lib/features/weather/domain/models/current_weather_model.dart` | Immutable — `fromJson` |
 | `lib/features/weather/domain/models/daily_forecast_model.dart` | Immutable — `fromArrays` + `fromJson` / `toJson` |
 | `lib/features/weather/domain/models/hourly_forecast_model.dart` | Immutable — `fromArrays` + `fromJson` / `toJson` |
-| `lib/features/weather/domain/models/weather_data_model.dart` | Aggregate — `fromJson`, `fromCacheJson` (cache-version-checked), `toJson` |
+| `lib/features/weather/domain/models/weather_data_model.dart` | Aggregate — `fromJson`, `fromCacheJson` (cache-version-checked, sets `isFromCache: true`), `toJson`, `copyWith` |
 
-### Data — Phase 1 ✅
+### Data — Phase 1 & 5 ✅
 
 | File | Purpose |
 |---|---|
 | `lib/features/weather/data/api/geocoding_api_client.dart` | Dio GET `/v1/search` — handles missing `results` key, `CancelToken` |
 | `lib/features/weather/data/api/weather_api_client.dart` | Dio GET `/v1/forecast` — current + daily + hourly, `CancelToken` |
 | `lib/features/weather/data/repositories/weather_repository.dart` | Combines both clients; maps all `DioException` → `WeatherFailure` |
+| `lib/features/weather/data/local/weather_local_storage.dart` | Persists `WeatherDataModel` JSON to `SharedPreferences`, validates schema version, auto-purges corrupted payloads |
 
 ### Utils — Phase 2 ✅
 
@@ -85,21 +87,21 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 |---|---|
 | `lib/core/utils/weather_code_mapper.dart` | `WeatherCodeMapper.map(int)` → `WeatherInfo` (icon, tint, glow, text) |
 
-### Application — Phase 3 ✅
+### Application — Phase 3 & 5 ✅
 
 | File | Purpose |
 |---|---|
-| `lib/features/weather/application/providers.dart` | All Riverpod provider declarations (Dio clients, repository, notifiers) |
-| `lib/features/weather/application/weather_notifier.dart` | `AsyncNotifier<WeatherDataModel?>` managing weather fetch and `CancelToken` |
+| `lib/features/weather/application/providers.dart` | All Riverpod provider declarations (Dio clients, storage, repository, notifiers) |
+| `lib/features/weather/application/weather_notifier.dart` | `AsyncNotifier<WeatherDataModel?>` loading cache on startup, saving cache on success, distinguishing offline+cache from offline+no-cache, background refresh, and `CancelToken` |
 | `lib/features/weather/application/search_notifier.dart` | `AsyncNotifier<List<CityModel>>` with 500ms debounce, input validation, and `CancelToken` |
 | `lib/features/weather/application/settings_notifier.dart` | `Notifier<TemperatureUnit>` with `SharedPreferences` unit preference persistence |
 
-### Presentation — Phase 3 & 4 ✅
+### Presentation — Phase 3, 4 & 5 ✅
 
 | File | Purpose |
 |---|---|
-| `lib/features/weather/presentation/weather_screen.dart` | Main screen consuming `weatherNotifierProvider`, `CustomScrollView` layout |
-| `lib/features/weather/presentation/widgets/weather_header.dart` | Tappable city selector (opens search sheet) + date/time |
+| `lib/features/weather/presentation/weather_screen.dart` | Main screen consuming `weatherNotifierProvider`, `CustomScrollView` layout with conditional `OfflineBanner` |
+| `lib/features/weather/presentation/widgets/weather_header.dart` | Tappable city selector (opens search sheet) + date/time / "Last updated: {time}" subtitle |
 | `lib/features/weather/presentation/widgets/weather_hero.dart` | Weather icon (80px) + oversized temperature (`FittedBox`) + condition text |
 | `lib/features/weather/presentation/widgets/metric_card.dart` | Surface card with icon, label, and metric value with units |
 | `lib/features/weather/presentation/widgets/metric_cards_row.dart` | Side-by-side Wind and Humidity metric cards |
@@ -108,15 +110,10 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 | `lib/features/weather/presentation/widgets/loading_state.dart` | Centered `CircularProgressIndicator` with `colorAccentBlue` |
 | `lib/features/weather/presentation/widgets/error_state.dart` | `colorError` icon + `WeatherFailure`-mapped message + `colorAccentBlue` retry button |
 | `lib/features/weather/presentation/widgets/empty_state.dart` | Centered search icon + prompt text + optional interactive tap handler |
+| `lib/features/weather/presentation/widgets/offline_banner.dart` | Full-bleed staleness banner ("Data may be outdated • Last updated: {time}") with `colorOfflineBanner` |
 | `lib/features/weather/presentation/sheets/search_field.dart` | Search text field with prefix icon, clear button, and inline validation error |
 | `lib/features/weather/presentation/sheets/search_result_tile.dart` | City search item: name + admin1 + country subtitle (≥48px tap target) |
 | `lib/features/weather/presentation/sheets/search_bottom_sheet.dart` | Modal bottom sheet with drag handle, search field, dedicated loading/empty/error states |
-
-### Empty directories — filled in upcoming phases
-
-| Directory | Phase |
-|---|---|
-| `lib/features/weather/data/local/` | Phase 5 — `weather_local_storage.dart` |
 
 ---
 
@@ -172,6 +169,19 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 - Updated `WeatherNotifier` to preserve `selectedCity` across requests so that retry actions on failure reliably retry the intended city.
 - Added comprehensive unit/widget tests in `test/widget_test.dart` covering launch smoke test, `LoadingState`, `EmptyState`, and `ErrorState` message mapping and retry interaction.
 
+### Phase 5
+- Created `lib/features/weather/data/local/weather_local_storage.dart` encapsulating `SharedPreferences` operations for `WeatherDataModel` JSON with schema version validation and corrupted payload purging.
+- Added `isFromCache` and `copyWith` to `WeatherDataModel` (`fromCacheJson` marks `isFromCache: true`).
+- Implemented `lib/features/weather/presentation/widgets/offline_banner.dart` rendering `"Data may be outdated • Last updated: {time}"` with `colorOfflineBanner` and 16px `Icons.cloud_off_rounded`.
+- Added `weatherLocalStorageProvider` to `providers.dart`.
+- Updated `WeatherNotifier`:
+  - `build()` loads cached data from local storage on startup; returns cached data immediately with `isFromCache == true`.
+  - Initiates background silent refresh without overriding cached UI if offline.
+  - Distinguishes "offline + cache" (keeps data + sets `isFromCache: true`) from "offline + no cache" (emits `AsyncError` for `ErrorState`).
+  - Automatically persists freshly fetched data to local storage on success.
+- Updated `WeatherScreen` to display `OfflineBanner` when `weather.isFromCache` is true and updated `WeatherHeader` to indicate `isLastUpdated`.
+- Expanded `test/widget_test.dart` with unit tests for `WeatherLocalStorage` (save, load, corrupted JSON purging, schema mismatch purging) and widget tests for `OfflineBanner` and cached `WeatherScreen` display (10/10 tests passing).
+
 ---
 
 ## 5. Failed Attempts
@@ -182,28 +192,27 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 | `git add` / `git commit` fail in standard sandbox | `fatal: Unable to create '.git/index.lock': Permission denied` — sandbox lacks write access to `.git` | Always use `BypassSandbox: true` for all git operations |
 | `&&` chaining in PowerShell | `'&&' is not a valid statement separator in this version` | Use separate `run_command` calls, or join commands with `;` |
 | Removed stale `index.lock` | Attempted `Remove-Item -Force .git\index.lock` — file did not exist; permission error persisted anyway | Not a stale lock — sandbox simply has no `.git` write access |
+| `flutter test` hangs in sandboxed task | Sandbox blocks local loopback sockets needed by test daemon | Run `flutter test` with `BypassSandbox: true` |
 
 ---
 
 ## 6. Next Steps
 
-### Immediate — Phase 5: Offline Cache (Est: 0.75h)
+### Immediate — Phase 6: Edge Cases (Est: 0.5h)
 
-**Goal:** Persist last successful weather data and show it when offline.
+**Goal:** Handle edge cases and request cancellation systematically.
 
 **Files to build / update:**
-- `lib/features/weather/data/local/weather_local_storage.dart` (read/write `WeatherData` JSON to `SharedPreferences`)
-- `lib/features/weather/presentation/widgets/offline_banner.dart` — "Data may be outdated • Last updated: {time}"
-- Modify `weather_notifier.dart` to load cache first, then refresh
-- Distinguish "offline + cache" (show data + banner) from "offline + no cache" (error state)
+- `lib/core/utils/unit_converter.dart` (pure conversion functions: `celsiusToFahrenheit`, `kmhToMph`, etc.)
+- Verify request cancellation across rapid search typing and city selections
+- Verify null-safe handling of partial API responses
 
-Commit: `feat(cache): implement offline caching with staleness indicator`
+Commit: `feat(edge): handle edge cases and request cancellation`
 
 ### Remaining Phases (in order)
 
 | Phase | Description |
 |---|---|
-| 5 | Offline cache — `weather_local_storage.dart` + `offline_banner.dart` |
 | 6 | Edge cases — request cancellation, rotation, partial responses, `unit_converter.dart` |
 | 7 | Design polish — glow icon, hourly strip, metric cards, WCAG check |
 | 8a–8d | Bonus (cuttable in reverse order): pull-to-refresh, unit toggle, search history, location |

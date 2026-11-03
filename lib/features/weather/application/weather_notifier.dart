@@ -7,7 +7,7 @@ import 'providers.dart';
 
 /// Notifier managing current weather data state.
 ///
-/// Handles cancellation of in-flight requests and safe async updates.
+/// Handles local cache loading, request cancellation, and network fetch updates.
 class WeatherNotifier extends AsyncNotifier<WeatherDataModel?> {
   CancelToken? _cancelToken;
   CityModel? _selectedCity;
@@ -16,35 +16,92 @@ class WeatherNotifier extends AsyncNotifier<WeatherDataModel?> {
   CityModel? get selectedCity => _selectedCity ?? state.valueOrNull?.city;
 
   @override
-  FutureOr<WeatherDataModel?> build() {
+  FutureOr<WeatherDataModel?> build() async {
     ref.onDispose(() {
       _cancelToken?.cancel('WeatherNotifier disposed');
     });
 
-    // In Phase 3, initial state is null (empty state).
-    // In Phase 5, this will load from local cache.
+    final localStorage = ref.read(weatherLocalStorageProvider);
+    final cached = await localStorage.getCachedWeatherData();
+    if (cached != null) {
+      _selectedCity = cached.city;
+      unawaited(_refreshSilently(cached.city));
+      return cached;
+    }
+
     return null;
   }
 
   /// Fetches weather forecast data for [city].
   ///
   /// Cancels any previous in-flight request before starting a new one.
+  /// If offline or network fails and cached data exists for [city],
+  /// retains the cached data with the staleness indicator rather than
+  /// transitioning to an error screen.
   Future<void> fetchWeather(CityModel city) async {
     _selectedCity = city;
     _cancelToken?.cancel('New weather request initiated');
     final cancelToken = _cancelToken = CancelToken();
 
+    final previousData = state.valueOrNull;
     state = const AsyncLoading();
 
-    final nextState = await AsyncValue.guard(() async {
+    final repository = ref.read(weatherRepositoryProvider);
+    final localStorage = ref.read(weatherLocalStorageProvider);
+
+    try {
+      final freshData = await repository.fetchWeather(
+        city,
+        cancelToken: cancelToken,
+      );
+
+      if (cancelToken.isCancelled) return;
+
+      // Save to cache on successful fetch
+      await localStorage.saveWeatherData(freshData);
+
+      state = AsyncData(freshData);
+    } catch (error, stackTrace) {
+      if (cancelToken.isCancelled) return;
+
+      // Distinguish offline + cache from offline + no cache
+      if (previousData != null &&
+          previousData.city.name.toLowerCase() == city.name.toLowerCase()) {
+        state = AsyncData(previousData.copyWith(isFromCache: true));
+      } else {
+        final cached = await localStorage.getCachedWeatherData();
+        if (cached != null &&
+            cached.city.name.toLowerCase() == city.name.toLowerCase()) {
+          state = AsyncData(cached);
+        } else {
+          state = AsyncError(error, stackTrace);
+        }
+      }
+    }
+  }
+
+  /// Silently attempts to refresh cached weather data in the background.
+  Future<void> _refreshSilently(CityModel city) async {
+    _cancelToken?.cancel('Silent refresh initiated');
+    final cancelToken = _cancelToken = CancelToken();
+
+    try {
       final repository = ref.read(weatherRepositoryProvider);
-      return await repository.fetchWeather(city, cancelToken: cancelToken);
-    });
+      final freshData = await repository.fetchWeather(
+        city,
+        cancelToken: cancelToken,
+      );
 
-    // If request was superseded or cancelled, discard result.
-    if (cancelToken.isCancelled) return;
+      if (cancelToken.isCancelled) return;
 
-    state = nextState;
+      final localStorage = ref.read(weatherLocalStorageProvider);
+      await localStorage.saveWeatherData(freshData);
+
+      state = AsyncData(freshData);
+    } catch (_) {
+      // Offline or network error during silent background refresh:
+      // Keep displaying the cached data with the offline banner.
+    }
   }
 
   /// Refreshes weather data for the currently selected city.

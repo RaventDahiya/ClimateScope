@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/api/geocoding_api_client.dart';
 import '../data/api/weather_api_client.dart';
+import '../data/local/weather_local_storage.dart';
 import '../data/repositories/weather_repository.dart';
 import '../domain/enums/temperature_unit.dart';
 import '../domain/models/city_model.dart';
@@ -17,6 +18,11 @@ final geocodingApiClientProvider = Provider<GeocodingApiClient>((ref) {
 /// Provider for the [WeatherApiClient] singleton.
 final weatherApiClientProvider = Provider<WeatherApiClient>((ref) {
   return WeatherApiClient();
+});
+
+/// Provider for the [WeatherLocalStorage] persistence layer.
+final weatherLocalStorageProvider = Provider<WeatherLocalStorage>((ref) {
+  return WeatherLocalStorage();
 });
 
 /// Provider for the [WeatherRepository] data-access layer.
