@@ -27,7 +27,7 @@ Full spec lives in `docs/PRD.md`, architecture in `docs/Architecture.md`, design
 | 6 | Edge Cases | ✅ Complete (committed) |
 | 7 | Design Polish | ✅ Complete (committed) |
 | 8a–8d | Bonus Features | ⏳ Not started |
-| 9 | Final Polish & README | ⏳ Not started |
+| 9 | Final Polish & README | ✅ Complete (committed) |
 
 **Git log (latest):**
 ```
