@@ -115,7 +115,7 @@ Example: searching "London" shows London (England, United Kingdom), London (Onta
 
 | Screen | Description |
 |---|---|
-| ![Main](screenshots/main.png) | Main weather view |
+| ![Main](screenshots/main.jpeg) | Main weather view |
 | ![Search](screenshots/search.png) | City search sheet |
 | ![Error](screenshots/error.png) | Error state |
-| ![Offline](screenshots/offline.png) | Offline with cached data |
+| ![Offline](screenshots/offline.jpeg) | Offline with cached data |
