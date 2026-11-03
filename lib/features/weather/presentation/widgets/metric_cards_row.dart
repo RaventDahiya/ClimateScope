@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/strings/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/utils/unit_converter.dart';
 import '../../domain/enums/temperature_unit.dart';
 import 'metric_card.dart';
 
@@ -25,10 +26,7 @@ class MetricCardsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isImperial = unit == TemperatureUnit.fahrenheit;
-    final displayWind = isImperial
-        ? '${(windSpeed * 0.621371).round()} ${AppStrings.unitMph}'
-        : '${windSpeed.round()} ${AppStrings.unitKmh}';
+    final displayWind = UnitConverter.formatWindSpeed(windSpeed, unit);
 
     final displayHumidity = '$humidity${AppStrings.unitPercent}';
 

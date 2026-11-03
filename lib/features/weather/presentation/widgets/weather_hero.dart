@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/unit_converter.dart';
 import '../../../../core/utils/weather_code_mapper.dart';
 import '../../domain/enums/temperature_unit.dart';
 
@@ -27,10 +27,7 @@ class WeatherHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final info = WeatherCodeMapper.map(weatherCode);
 
-    // Convert display value if unit is Fahrenheit
-    final displayTemp = unit == TemperatureUnit.fahrenheit
-        ? (temperature * 9 / 5 + 32).round()
-        : temperature.round();
+    final displayTemp = UnitConverter.temperatureValue(temperature, unit);
 
     return Padding(
       padding: const EdgeInsets.only(

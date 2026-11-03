@@ -4,6 +4,7 @@ import '../../../../core/strings/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/unit_converter.dart';
 import '../../../../core/utils/weather_code_mapper.dart';
 import '../../domain/enums/temperature_unit.dart';
 import '../../domain/models/daily_forecast_model.dart';
@@ -34,13 +35,8 @@ class DailyForecastRow extends StatelessWidget {
         ? AppStrings.todaySectionTitle
         : DateFormat('EEE').format(forecast.date);
 
-    final minTemp = unit == TemperatureUnit.fahrenheit
-        ? (forecast.tempMin * 9 / 5 + 32).round()
-        : forecast.tempMin.round();
-
-    final maxTemp = unit == TemperatureUnit.fahrenheit
-        ? (forecast.tempMax * 9 / 5 + 32).round()
-        : forecast.tempMax.round();
+    final minTemp = UnitConverter.temperatureValue(forecast.tempMin, unit);
+    final maxTemp = UnitConverter.temperatureValue(forecast.tempMax, unit);
 
     return Padding(
       padding: const EdgeInsets.symmetric(

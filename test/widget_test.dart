@@ -7,9 +7,12 @@ import 'package:climate_scope/app.dart';
 import 'package:climate_scope/core/constants/app_constants.dart';
 import 'package:climate_scope/core/strings/app_strings.dart';
 import 'package:climate_scope/core/theme/app_colors.dart';
+import 'package:climate_scope/core/utils/unit_converter.dart';
+import 'package:climate_scope/core/utils/weather_code_mapper.dart';
 import 'package:climate_scope/features/weather/application/providers.dart';
 import 'package:climate_scope/features/weather/application/weather_notifier.dart';
 import 'package:climate_scope/features/weather/data/local/weather_local_storage.dart';
+import 'package:climate_scope/features/weather/domain/enums/temperature_unit.dart';
 import 'package:climate_scope/features/weather/domain/failures/weather_failure.dart';
 import 'package:climate_scope/features/weather/domain/models/city_model.dart';
 import 'package:climate_scope/features/weather/domain/models/current_weather_model.dart';
@@ -250,6 +253,117 @@ void main() {
       find.text('${AppStrings.lastUpdatedPrefix}2:30 PM'),
       findsOneWidget,
     );
+  });
+
+  // ── UnitConverter Tests ────────────────────────────────────────────────────
+
+  group('UnitConverter', () {
+    test('celsiusToFahrenheit converts 0°C → 32°F', () {
+      expect(UnitConverter.celsiusToFahrenheit(0), 32.0);
+    });
+
+    test('celsiusToFahrenheit converts 100°C → 212°F', () {
+      expect(UnitConverter.celsiusToFahrenheit(100), 212.0);
+    });
+
+    test('celsiusToFahrenheit converts negative (-40°C → -40°F)', () {
+      expect(UnitConverter.celsiusToFahrenheit(-40), -40.0);
+    });
+
+    test('fahrenheitToCelsius converts 32°F → 0°C', () {
+      expect(UnitConverter.fahrenheitToCelsius(32), closeTo(0.0, 0.001));
+    });
+
+    test('fahrenheitToCelsius converts 212°F → 100°C', () {
+      expect(UnitConverter.fahrenheitToCelsius(212), closeTo(100.0, 0.001));
+    });
+
+    test('kmhToMph converts 100 km/h → ~62.1 mph', () {
+      expect(UnitConverter.kmhToMph(100), closeTo(62.1371, 0.001));
+    });
+
+    test('mphToKmh converts 1 mph → ~1.60934 km/h', () {
+      expect(UnitConverter.mphToKmh(1), closeTo(1.60934, 0.001));
+    });
+
+    test('formatTemperature returns Celsius string with symbol', () {
+      expect(
+        UnitConverter.formatTemperature(23.4, TemperatureUnit.celsius),
+        '23°C',
+      );
+    });
+
+    test('formatTemperature converts and returns Fahrenheit string with symbol',
+        () {
+      // 23.4°C → 74.12°F → round → 74°F
+      expect(
+        UnitConverter.formatTemperature(23.4, TemperatureUnit.fahrenheit),
+        '74°F',
+      );
+    });
+
+    test('formatWindSpeed returns km/h string for metric unit', () {
+      expect(
+        UnitConverter.formatWindSpeed(15.0, TemperatureUnit.celsius),
+        '15 km/h',
+      );
+    });
+
+    test('formatWindSpeed returns mph string for imperial unit', () {
+      // 15 km/h * 0.621371 = 9.32 → round → 9 mph
+      expect(
+        UnitConverter.formatWindSpeed(15.0, TemperatureUnit.fahrenheit),
+        '9 mph',
+      );
+    });
+
+    test('temperatureValue returns rounded Celsius int for metric', () {
+      expect(UnitConverter.temperatureValue(21.7, TemperatureUnit.celsius), 22);
+    });
+
+    test('temperatureValue converts and returns rounded Fahrenheit int', () {
+      // 21.7°C → 71.06°F → round → 71
+      expect(
+        UnitConverter.temperatureValue(21.7, TemperatureUnit.fahrenheit),
+        71,
+      );
+    });
+  });
+
+  // ── WeatherCodeMapper Tests ────────────────────────────────────────────────
+
+  group('WeatherCodeMapper', () {
+    test('maps code 0 to Clear Sky with yellow tint', () {
+      final info = WeatherCodeMapper.map(0);
+      expect(info.conditionText, 'Clear Sky');
+      expect(info.tintColor, AppColors.colorWeatherYellow);
+      expect(info.icon, Icons.wb_sunny_rounded);
+    });
+
+    test('maps code 63 to Moderate Rain with blue tint', () {
+      final info = WeatherCodeMapper.map(63);
+      expect(info.conditionText, 'Moderate Rain');
+      expect(info.tintColor, AppColors.colorWeatherBlue);
+    });
+
+    test('maps code 95 to Thunderstorm with yellow tint', () {
+      final info = WeatherCodeMapper.map(95);
+      expect(info.conditionText, 'Thunderstorm');
+      expect(info.tintColor, AppColors.colorWeatherYellow);
+    });
+
+    test('maps unknown code 999 to Unknown fallback', () {
+      final info = WeatherCodeMapper.map(999);
+      expect(info.conditionText, 'Unknown');
+      expect(info.icon, Icons.help_outline_rounded);
+      expect(info.tintColor, AppColors.colorTextSecondary);
+    });
+
+    test('maps code 71 to Slight Snow with white tint', () {
+      final info = WeatherCodeMapper.map(71);
+      expect(info.conditionText, 'Slight Snow');
+      expect(info.tintColor, AppColors.colorWeatherWhite);
+    });
   });
 }
 
