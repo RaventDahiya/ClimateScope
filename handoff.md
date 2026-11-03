@@ -22,7 +22,7 @@ Full spec lives in `docs/PRD.md`, architecture in `docs/Architecture.md`, design
 | 1 | Models & API Clients | ✅ Complete (committed) |
 | 2 | Weather Code Mapper | ✅ Complete (committed) |
 | 3 | State Management & Basic UI | ✅ Complete (committed) |
-| 4 | Loading / Error / Empty States | ⏳ Not started |
+| 4 | Loading / Error / Empty States | ✅ Complete (committed) |
 | 5 | Offline Cache | ⏳ Not started |
 | 6 | Edge Cases | ⏳ Not started |
 | 7 | Design Polish | ⏳ Not started |
@@ -31,6 +31,7 @@ Full spec lives in `docs/PRD.md`, architecture in `docs/Architecture.md`, design
 
 **Git log (latest):**
 ```
+feat(states): add loading, error, and empty state views
 feat(ui): implement search, current weather, and 5-day forecast
 305d18e feat(mapper): add WMO weather code to icon and label mapper
 3fe690d feat(models): add data models, API clients, and repository
@@ -93,7 +94,7 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 | `lib/features/weather/application/search_notifier.dart` | `AsyncNotifier<List<CityModel>>` with 500ms debounce, input validation, and `CancelToken` |
 | `lib/features/weather/application/settings_notifier.dart` | `Notifier<TemperatureUnit>` with `SharedPreferences` unit preference persistence |
 
-### Presentation — Phase 3 ✅
+### Presentation — Phase 3 & 4 ✅
 
 | File | Purpose |
 |---|---|
@@ -104,9 +105,12 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 | `lib/features/weather/presentation/widgets/metric_cards_row.dart` | Side-by-side Wind and Humidity metric cards |
 | `lib/features/weather/presentation/widgets/daily_forecast_row.dart` | Day label, condition icon, min/max temperatures |
 | `lib/features/weather/presentation/widgets/daily_forecast_list.dart` | "5 days" container enclosing daily forecast rows separated by dividers |
+| `lib/features/weather/presentation/widgets/loading_state.dart` | Centered `CircularProgressIndicator` with `colorAccentBlue` |
+| `lib/features/weather/presentation/widgets/error_state.dart` | `colorError` icon + `WeatherFailure`-mapped message + `colorAccentBlue` retry button |
+| `lib/features/weather/presentation/widgets/empty_state.dart` | Centered search icon + prompt text + optional interactive tap handler |
 | `lib/features/weather/presentation/sheets/search_field.dart` | Search text field with prefix icon, clear button, and inline validation error |
 | `lib/features/weather/presentation/sheets/search_result_tile.dart` | City search item: name + admin1 + country subtitle (≥48px tap target) |
-| `lib/features/weather/presentation/sheets/search_bottom_sheet.dart` | Modal bottom sheet with drag handle, search field, loading/empty/error states |
+| `lib/features/weather/presentation/sheets/search_bottom_sheet.dart` | Modal bottom sheet with drag handle, search field, dedicated loading/empty/error states |
 
 ### Empty directories — filled in upcoming phases
 
@@ -158,6 +162,16 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 - Implemented `search_field.dart`, `search_result_tile.dart`, and `search_bottom_sheet.dart` modal sheet with drag handle, clear button, and inline validation.
 - Implemented `weather_screen.dart` with `AsyncValue.when()` handling empty state, loading, error, and populated `CustomScrollView` content.
 
+### Phase 4
+- Implemented `loading_state.dart` with centered `CircularProgressIndicator` tinted with `colorAccentBlue`.
+- Implemented `empty_state.dart` with 64px `Icons.search_rounded` icon, text styled with `AppTypography.body` in `colorTextSecondary`, and optional `InkWell` wrapper for interactive tap actions.
+- Implemented `error_state.dart` with 64px `Icons.error_outline_rounded` in `colorError`, user-friendly message mapped exhaustively from `WeatherFailure` sealed members using pattern matching, and an outlined `AppStrings.retry` button with `colorAccentBlue` border and text.
+- Wrapped column contents in `SingleChildScrollView` to prevent any viewport overflow when virtual keyboards are open.
+- Refactored `weather_screen.dart` to use `LoadingState`, `ErrorState`, and `EmptyState`.
+- Refactored `search_bottom_sheet.dart` to use `LoadingState`, `ErrorState` with retry on search query, and `EmptyState` displaying `AppStrings.noResultsFoundFor(query)`.
+- Updated `WeatherNotifier` to preserve `selectedCity` across requests so that retry actions on failure reliably retry the intended city.
+- Added comprehensive unit/widget tests in `test/widget_test.dart` covering launch smoke test, `LoadingState`, `EmptyState`, and `ErrorState` message mapping and retry interaction.
+
 ---
 
 ## 5. Failed Attempts
@@ -173,18 +187,17 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 
 ## 6. Next Steps
 
-### Immediate — Phase 4: Loading, Error, and Empty States (Est: 0.5h)
+### Immediate — Phase 5: Offline Cache (Est: 0.75h)
 
-**Goal:** Implement all dedicated state views and map `WeatherFailure` types to user-friendly messages from `app_strings.dart`.
+**Goal:** Persist last successful weather data and show it when offline.
 
 **Files to build / update:**
-- `lib/features/weather/presentation/widgets/loading_state.dart` — centered spinner
-- `lib/features/weather/presentation/widgets/error_state.dart` — icon + message + retry button
-- `lib/features/weather/presentation/widgets/empty_state.dart` — search prompt for first launch
-- Refactor `weather_screen.dart` to use the dedicated state widgets
-- Refactor `search_bottom_sheet.dart` to use state views
+- `lib/features/weather/data/local/weather_local_storage.dart` (read/write `WeatherData` JSON to `SharedPreferences`)
+- `lib/features/weather/presentation/widgets/offline_banner.dart` — "Data may be outdated • Last updated: {time}"
+- Modify `weather_notifier.dart` to load cache first, then refresh
+- Distinguish "offline + cache" (show data + banner) from "offline + no cache" (error state)
 
-Commit: `feat(states): add loading, error, and empty state views`
+Commit: `feat(cache): implement offline caching with staleness indicator`
 
 ### Remaining Phases (in order)
 

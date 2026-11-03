@@ -10,6 +10,10 @@ import 'providers.dart';
 /// Handles cancellation of in-flight requests and safe async updates.
 class WeatherNotifier extends AsyncNotifier<WeatherDataModel?> {
   CancelToken? _cancelToken;
+  CityModel? _selectedCity;
+
+  /// Currently selected city (or null if no city has been selected yet).
+  CityModel? get selectedCity => _selectedCity ?? state.valueOrNull?.city;
 
   @override
   FutureOr<WeatherDataModel?> build() {
@@ -26,6 +30,7 @@ class WeatherNotifier extends AsyncNotifier<WeatherDataModel?> {
   ///
   /// Cancels any previous in-flight request before starting a new one.
   Future<void> fetchWeather(CityModel city) async {
+    _selectedCity = city;
     _cancelToken?.cancel('New weather request initiated');
     final cancelToken = _cancelToken = CancelToken();
 
@@ -44,9 +49,9 @@ class WeatherNotifier extends AsyncNotifier<WeatherDataModel?> {
 
   /// Refreshes weather data for the currently selected city.
   Future<void> refresh() async {
-    final currentData = state.valueOrNull;
-    if (currentData != null) {
-      await fetchWeather(currentData.city);
+    final targetCity = selectedCity;
+    if (targetCity != null) {
+      await fetchWeather(targetCity);
     }
   }
 }

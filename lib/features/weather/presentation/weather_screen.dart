@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/strings/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimensions.dart';
-import '../../../core/theme/app_typography.dart';
 import '../application/providers.dart';
 import 'sheets/search_bottom_sheet.dart';
 import 'widgets/daily_forecast_list.dart';
+import 'widgets/empty_state.dart';
+import 'widgets/error_state.dart';
+import 'widgets/loading_state.dart';
 import 'widgets/metric_cards_row.dart';
 import 'widgets/weather_header.dart';
 import 'widgets/weather_hero.dart';
@@ -30,76 +32,38 @@ class WeatherScreen extends ConsumerWidget {
           loading: () => Column(
             children: [
               WeatherHeader(
-                cityName: weatherAsync.valueOrNull?.city.name ?? AppStrings.appName,
+                cityName: weatherAsync.valueOrNull?.city.name ??
+                    ref.read(weatherNotifierProvider.notifier).selectedCity?.name ??
+                    AppStrings.appName,
                 dateTime: weatherAsync.valueOrNull?.lastUpdated ?? DateTime.now(),
                 onTapCity: () => SearchBottomSheet.show(context),
               ),
               const Expanded(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.colorAccentBlue,
-                  ),
-                ),
+                child: LoadingState(),
               ),
             ],
           ),
           error: (error, _) => Column(
             children: [
               WeatherHeader(
-                cityName: weatherAsync.valueOrNull?.city.name ?? AppStrings.appName,
+                cityName: weatherAsync.valueOrNull?.city.name ??
+                    ref.read(weatherNotifierProvider.notifier).selectedCity?.name ??
+                    AppStrings.appName,
                 dateTime: weatherAsync.valueOrNull?.lastUpdated ?? DateTime.now(),
                 onTapCity: () => SearchBottomSheet.show(context),
               ),
               Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.spaceXl),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.error_outline_rounded,
-                          size: 64,
-                          color: AppColors.colorError,
-                        ),
-                        const SizedBox(height: AppDimensions.spaceLg),
-                        Text(
-                          error.toString().replaceFirst('Exception: ', ''),
-                          style: AppTypography.body,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppDimensions.spaceLg),
-                        OutlinedButton(
-                          onPressed: () {
-                            final currentCity = weatherAsync.valueOrNull?.city;
-                            if (currentCity != null) {
-                              ref
-                                  .read(weatherNotifierProvider.notifier)
-                                  .fetchWeather(currentCity);
-                            } else {
-                              SearchBottomSheet.show(context);
-                            }
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.colorAccentBlue,
-                            side: const BorderSide(
-                              color: AppColors.colorAccentBlue,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.radiusMd,
-                              ),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppDimensions.spaceXl,
-                              vertical: AppDimensions.spaceMd,
-                            ),
-                          ),
-                          child: const Text(AppStrings.retry),
-                        ),
-                      ],
-                    ),
-                  ),
+                child: ErrorState(
+                  failure: error,
+                  onRetry: () {
+                    final notifier = ref.read(weatherNotifierProvider.notifier);
+                    final currentCity = notifier.selectedCity;
+                    if (currentCity != null) {
+                      notifier.fetchWeather(currentCity);
+                    } else {
+                      SearchBottomSheet.show(context);
+                    }
+                  },
                 ),
               ),
             ],
@@ -115,36 +79,8 @@ class WeatherScreen extends ConsumerWidget {
                     onTapCity: () => SearchBottomSheet.show(context),
                   ),
                   Expanded(
-                    child: Center(
-                      child: InkWell(
-                        onTap: () => SearchBottomSheet.show(context),
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusLg,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(
-                            AppDimensions.spaceXl,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.search_rounded,
-                                size: 64,
-                                color: AppColors.colorTextSecondary,
-                              ),
-                              const SizedBox(height: AppDimensions.spaceLg),
-                              Text(
-                                AppStrings.emptySearchPrompt,
-                                style: AppTypography.body.copyWith(
-                                  color: AppColors.colorTextSecondary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    child: EmptyState(
+                      onTap: () => SearchBottomSheet.show(context),
                     ),
                   ),
                 ],

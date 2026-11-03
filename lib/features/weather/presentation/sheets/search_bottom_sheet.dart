@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/strings/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../application/providers.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
+import '../widgets/loading_state.dart';
 import 'search_field.dart';
 import 'search_result_tile.dart';
 
@@ -103,23 +105,17 @@ class _SearchBottomSheetState extends ConsumerState<SearchBottomSheet> {
           // Results list or state indicator
           Flexible(
             child: searchAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(AppDimensions.spaceXl),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.colorAccentBlue,
-                  ),
-                ),
-              ),
-              error: (error, _) => Padding(
-                padding: const EdgeInsets.all(AppDimensions.spaceXl),
-                child: Center(
-                  child: Text(
-                    AppStrings.errorServer,
-                    style: AppTypography.body,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+              loading: () => const LoadingState(),
+              error: (error, _) => ErrorState(
+                failure: error,
+                onRetry: () {
+                  final query = _controller.text;
+                  if (query.trim().isNotEmpty) {
+                    ref
+                        .read(searchNotifierProvider.notifier)
+                        .searchImmediate(query);
+                  }
+                },
               ),
               data: (cities) {
                 if (validationError != null) {
@@ -127,16 +123,9 @@ class _SearchBottomSheetState extends ConsumerState<SearchBottomSheet> {
                 }
 
                 if (cities.isEmpty && currentQuery.trim().isNotEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.all(AppDimensions.spaceXl),
-                    child: Center(
-                      child: Text(
-                        AppStrings.noCitiesFound,
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.colorTextSecondary,
-                        ),
-                      ),
-                    ),
+                  return EmptyState(
+                    icon: Icons.search_off_rounded,
+                    message: AppStrings.noResultsFoundFor(currentQuery.trim()),
                   );
                 }
 
