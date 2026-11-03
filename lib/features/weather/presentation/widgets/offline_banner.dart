@@ -53,3 +53,4 @@ class OfflineBanner extends StatelessWidget {
     );
   }
 }
+
