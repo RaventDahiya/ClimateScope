@@ -113,8 +113,6 @@ Example: searching "London" shows London (England, United Kingdom), London (Onta
 
 ## Screenshots
 
-{Add screenshots here}
-
 | Screen | Description |
 |---|---|
 | ![Main](screenshots/main.png) | Main weather view |
