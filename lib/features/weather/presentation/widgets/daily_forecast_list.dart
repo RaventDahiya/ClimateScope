@@ -26,9 +26,11 @@ class DailyForecastList extends StatelessWidget {
     final now = DateTime.now();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spaceXl,
-        vertical: AppDimensions.spaceSm,
+      padding: const EdgeInsets.only(
+        left: AppDimensions.spaceXl,
+        right: AppDimensions.spaceXl,
+        top: AppDimensions.spaceLg,
+        bottom: AppDimensions.spaceSm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,10 +44,7 @@ class DailyForecastList extends StatelessWidget {
           const SizedBox(height: AppDimensions.spaceMd),
           // Rounded container enclosing the daily rows
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spaceLg,
-              vertical: AppDimensions.spaceSm,
-            ),
+            padding: const EdgeInsets.all(AppDimensions.spaceLg),
             decoration: BoxDecoration(
               color: AppColors.colorSurface,
               borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
@@ -77,4 +76,3 @@ class DailyForecastList extends StatelessWidget {
     );
   }
 }
-

@@ -53,31 +53,35 @@ class WeatherHeader extends StatelessWidget {
             constraints: const BoxConstraints(
               minHeight: AppDimensions.minTapTargetSize,
             ),
-            child: InkWell(
-              onTap: onTapCity,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppDimensions.spaceXs,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        cityName,
-                        style: AppTypography.headerCity,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            child: Semantics(
+              button: true,
+              label: '$cityName, tap to choose city',
+              child: InkWell(
+                onTap: onTapCity,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppDimensions.spaceXs,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          cityName,
+                          style: AppTypography.headerCity,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppDimensions.spaceXs),
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppColors.colorTextSecondary,
-                      size: 20,
-                    ),
-                  ],
+                      const SizedBox(width: AppDimensions.spaceXs),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.colorTextSecondary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -92,4 +96,3 @@ class WeatherHeader extends StatelessWidget {
     );
   }
 }
-

@@ -38,48 +38,50 @@ class DailyForecastRow extends StatelessWidget {
     final minTemp = UnitConverter.temperatureValue(forecast.tempMin, unit);
     final maxTemp = UnitConverter.temperatureValue(forecast.tempMax, unit);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: AppDimensions.spaceMd,
-      ),
-      child: Row(
-        children: [
-          // Weekday label
-          SizedBox(
-            width: 72,
-            child: Text(
-              dayLabel,
-              style: AppTypography.forecastDay,
+    return Semantics(
+      label: '$dayLabel: ${info.conditionText}, low $minTemp degrees, high $maxTemp degrees',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: AppDimensions.spaceMd,
+        ),
+        child: Row(
+          children: [
+            // Weekday label (Left)
+            SizedBox(
+              width: 72,
+              child: Text(
+                dayLabel,
+                style: AppTypography.forecastDay,
+              ),
             ),
-          ),
-          // Condition icon with semantic label
-          Icon(
-            info.icon,
-            size: AppDimensions.weatherIconSmall,
-            color: info.tintColor,
-            semanticLabel: info.conditionText,
-          ),
-          const Spacer(),
-          // Min temperature (secondary color)
-          Text(
-            '$minTemp°',
-            style: AppTypography.forecastTemp.copyWith(
-              color: AppColors.colorTextSecondary,
+            // Condition icon with semantic label (Center-left)
+            Icon(
+              info.icon,
+              size: AppDimensions.weatherIconSmall,
+              color: info.tintColor,
+              semanticLabel: info.conditionText,
             ),
-          ),
-          const SizedBox(width: AppDimensions.spaceLg),
-          // Max temperature (primary color)
-          SizedBox(
-            width: 36,
-            child: Text(
-              '$maxTemp°',
-              style: AppTypography.forecastTemp,
-              textAlign: TextAlign.end,
+            const Spacer(),
+            // Min temperature (Center-right, secondary color)
+            Text(
+              '$minTemp°',
+              style: AppTypography.forecastTemp.copyWith(
+                color: AppColors.colorTextSecondary,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: AppDimensions.spaceLg),
+            // Max temperature (Right, primary color)
+            SizedBox(
+              width: 36,
+              child: Text(
+                '$maxTemp°',
+                style: AppTypography.forecastTemp,
+                textAlign: TextAlign.end,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-

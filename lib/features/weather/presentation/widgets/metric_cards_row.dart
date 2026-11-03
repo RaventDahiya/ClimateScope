@@ -27,13 +27,14 @@ class MetricCardsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayWind = UnitConverter.formatWindSpeed(windSpeed, unit);
-
     final displayHumidity = '$humidity${AppStrings.unitPercent}';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spaceXl,
-        vertical: AppDimensions.spaceSm,
+      padding: const EdgeInsets.only(
+        left: AppDimensions.spaceXl,
+        right: AppDimensions.spaceXl,
+        top: AppDimensions.spaceLg,
+        bottom: AppDimensions.spaceSm,
       ),
       child: Row(
         children: [
@@ -59,4 +60,3 @@ class MetricCardsRow extends StatelessWidget {
     );
   }
 }
-

@@ -24,6 +24,15 @@ import 'package:climate_scope/features/weather/presentation/widgets/empty_state.
 import 'package:climate_scope/features/weather/presentation/widgets/error_state.dart';
 import 'package:climate_scope/features/weather/presentation/widgets/loading_state.dart';
 import 'package:climate_scope/features/weather/presentation/widgets/offline_banner.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/daily_forecast_list.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/daily_forecast_row.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/hourly_slot.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/hourly_strip.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/metric_card.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/metric_cards_row.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/weather_header.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/weather_hero.dart';
+import 'package:climate_scope/features/weather/presentation/widgets/weather_icon_glow.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -363,6 +372,335 @@ void main() {
       final info = WeatherCodeMapper.map(71);
       expect(info.conditionText, 'Slight Snow');
       expect(info.tintColor, AppColors.colorWeatherWhite);
+    });
+  });
+
+  // ── Phase 7: Design Polish Tests ──────────────────────────────────────────
+
+  group('Phase 7: WeatherIconGlow', () {
+    testWidgets('renders radial glow and icon for clear sky (code 0)',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: WeatherIconGlow(weatherCode: 0),
+          ),
+        ),
+      );
+
+      final containerFinder = find.byType(Container);
+      expect(containerFinder, findsOneWidget);
+      final container = tester.widget<Container>(containerFinder);
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.gradient, isA<RadialGradient>());
+      final gradient = decoration.gradient as RadialGradient;
+      expect(gradient.colors.first, const Color(0xFFFACC15).withOpacity(0.20));
+      expect(gradient.colors.last, Colors.transparent);
+
+      final iconFinder = find.byIcon(Icons.wb_sunny_rounded);
+      expect(iconFinder, findsOneWidget);
+      final icon = tester.widget<Icon>(iconFinder);
+      expect(icon.color, AppColors.colorWeatherYellow);
+      expect(icon.semanticLabel, 'Clear Sky');
+    });
+
+    testWidgets('renders blue glow and water drop icon for rain (code 63)',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: WeatherIconGlow(weatherCode: 63),
+          ),
+        ),
+      );
+
+      final container = tester.widget<Container>(find.byType(Container));
+      final decoration = container.decoration as BoxDecoration;
+      final gradient = decoration.gradient as RadialGradient;
+      expect(gradient.colors.first, const Color(0xFF3B82F6).withOpacity(0.18));
+
+      final iconFinder = find.byIcon(Icons.water_drop_rounded);
+      expect(iconFinder, findsOneWidget);
+      final icon = tester.widget<Icon>(iconFinder);
+      expect(icon.color, AppColors.colorWeatherBlue);
+      expect(icon.semanticLabel, 'Moderate Rain');
+    });
+  });
+
+  group('Phase 7: WeatherHero', () {
+    testWidgets('renders icon glow, temperature with unit, and condition text',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: WeatherHero(
+              weatherCode: 0,
+              temperature: 22.4,
+              unit: TemperatureUnit.celsius,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(WeatherIconGlow), findsOneWidget);
+      expect(find.text('22°C'), findsOneWidget);
+      expect(find.text('Clear Sky'), findsOneWidget);
+    });
+
+    testWidgets('converts temperature when TemperatureUnit.fahrenheit is passed',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: WeatherHero(
+              weatherCode: 0,
+              temperature: 0.0,
+              unit: TemperatureUnit.fahrenheit,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('32°F'), findsOneWidget);
+    });
+  });
+
+  group('Phase 7: HourlySlot', () {
+    final slotModel = HourlyForecastModel(
+      time: DateTime(2026, 11, 3, 15),
+      temperature: 18.0,
+      weatherCode: 2,
+    );
+
+    testWidgets('renders default unselected state with colorSurfaceVariant',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HourlySlot(
+              forecast: slotModel,
+              isSelected: false,
+              onTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      final container = tester.widget<AnimatedContainer>(find.byType(AnimatedContainer));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, AppColors.colorSurfaceVariant);
+      expect(find.text('3 PM'), findsOneWidget);
+      expect(find.text('18°'), findsOneWidget);
+      expect(find.byIcon(Icons.cloud_rounded), findsOneWidget);
+    });
+
+    testWidgets('renders selected state with colorAccentBlue and fires onTap',
+        (WidgetTester tester) async {
+      var tapped = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HourlySlot(
+              forecast: slotModel,
+              isSelected: true,
+              onTap: () => tapped = true,
+            ),
+          ),
+        ),
+      );
+
+      final container = tester.widget<AnimatedContainer>(find.byType(AnimatedContainer));
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, AppColors.colorAccentBlue);
+
+      await tester.tap(find.byType(HourlySlot));
+      expect(tapped, isTrue);
+    });
+  });
+
+  group('Phase 7: HourlyStrip', () {
+    test('filterNext24Hours slices 24 slots starting from current hour', () {
+      final reference = DateTime(2026, 11, 3, 10, 15);
+      final all = List.generate(
+        120,
+        (i) => HourlyForecastModel(
+          time: DateTime(2026, 11, 3).add(Duration(hours: i)),
+          temperature: 20.0 + i,
+          weatherCode: 0,
+        ),
+      );
+
+      final sliced = HourlyStrip.filterNext24Hours(all, reference);
+      expect(sliced.length, 24);
+      expect(sliced.first.time.hour, 10);
+      expect(sliced.last.time.hour, 9); // next day 9 AM (24 hours)
+    });
+
+    test('filterNext24Hours safely returns short lists', () {
+      final shortList = [
+        HourlyForecastModel(
+          time: DateTime(2026, 11, 3, 12),
+          temperature: 15.0,
+          weatherCode: 0,
+        ),
+      ];
+
+      final result = HourlyStrip.filterNext24Hours(shortList);
+      expect(result.length, 1);
+    });
+
+    testWidgets('renders horizontal list and updates selection on tap',
+        (WidgetTester tester) async {
+      final hourlyList = List.generate(
+        24,
+        (i) => HourlyForecastModel(
+          time: DateTime(2026, 11, 3, i),
+          temperature: 15.0 + i,
+          weatherCode: 0,
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HourlyStrip(
+              hourlyForecasts: hourlyList,
+              referenceTime: DateTime(2026, 11, 3, 0),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text(AppStrings.todaySectionTitle), findsOneWidget);
+      expect(find.byType(HourlySlot), findsWidgets);
+
+      // First slot is selected initially
+      final firstSlot = tester.widget<HourlySlot>(find.byType(HourlySlot).first);
+      expect(firstSlot.isSelected, isTrue);
+
+      // Tap the second slot
+      await tester.tap(find.byType(HourlySlot).at(1));
+      await tester.pumpAndSettle();
+
+      final updatedFirstSlot = tester.widget<HourlySlot>(find.byType(HourlySlot).first);
+      final updatedSecondSlot = tester.widget<HourlySlot>(find.byType(HourlySlot).at(1));
+      expect(updatedFirstSlot.isSelected, isFalse);
+      expect(updatedSecondSlot.isSelected, isTrue);
+    });
+  });
+
+  group('Phase 7: MetricCardsRow & MetricCard', () {
+    testWidgets('renders Wind and Humidity cards with values and units',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: MetricCardsRow(
+              windSpeed: 25.0,
+              humidity: 80,
+              unit: TemperatureUnit.celsius,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text(AppStrings.windLabel), findsOneWidget);
+      expect(find.text('25 km/h'), findsOneWidget);
+      expect(find.byIcon(Icons.air_rounded), findsOneWidget);
+
+      expect(find.text(AppStrings.humidityLabel), findsOneWidget);
+      expect(find.text('80%'), findsOneWidget);
+      expect(find.byIcon(Icons.water_drop_rounded), findsOneWidget);
+    });
+
+    testWidgets('formats wind in mph when TemperatureUnit.fahrenheit',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: MetricCardsRow(
+              windSpeed: 100.0,
+              humidity: 50,
+              unit: TemperatureUnit.fahrenheit,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('62 mph'), findsOneWidget);
+    });
+  });
+
+  group('Phase 7: DailyForecastList & DailyForecastRow', () {
+    testWidgets('renders 5 daily forecast rows with dividers between them',
+        (WidgetTester tester) async {
+      final forecasts = List.generate(
+        5,
+        (i) => DailyForecastModel(
+          date: DateTime(2026, 11, 3 + i),
+          weatherCode: 0,
+          tempMin: 12.0 + i,
+          tempMax: 20.0 + i,
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DailyForecastList(dailyForecasts: forecasts),
+          ),
+        ),
+      );
+
+      expect(find.text(AppStrings.fiveDaysSectionTitle), findsOneWidget);
+      expect(find.byType(DailyForecastRow), findsNWidgets(5));
+      expect(find.byType(Divider), findsNWidgets(4));
+      expect(find.text(AppStrings.todaySectionTitle), findsOneWidget);
+    });
+  });
+
+  group('Phase 7: WeatherHeader', () {
+    testWidgets('renders city, chevron, and date, fires onTapCity',
+        (WidgetTester tester) async {
+      var cityTapped = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WeatherHeader(
+              cityName: 'Tokyo',
+              dateTime: DateTime(2026, 11, 3, 14, 30),
+              onTapCity: () => cityTapped = true,
+              isLastUpdated: false,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Tokyo'), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
+      expect(find.text('Tuesday, Nov 3'), findsOneWidget);
+
+      await tester.tap(find.text('Tokyo'));
+      expect(cityTapped, isTrue);
+    });
+
+    testWidgets('shows Last updated: format when isLastUpdated is true',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WeatherHeader(
+              cityName: 'Paris',
+              dateTime: DateTime(2026, 11, 3, 14, 30),
+              onTapCity: () {},
+              isLastUpdated: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Paris'), findsOneWidget);
+      expect(find.text('Last updated: 2:30 PM'), findsOneWidget);
     });
   });
 }

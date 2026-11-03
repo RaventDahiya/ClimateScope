@@ -25,12 +25,13 @@ Full spec lives in `docs/PRD.md`, architecture in `docs/Architecture.md`, design
 | 4 | Loading / Error / Empty States | ✅ Complete (committed) |
 | 5 | Offline Cache | ✅ Complete (committed) |
 | 6 | Edge Cases | ✅ Complete (committed) |
-| 7 | Design Polish | ⏳ Not started |
+| 7 | Design Polish | ✅ Complete (committed) |
 | 8a–8d | Bonus Features | ⏳ Not started |
 | 9 | Final Polish & README | ⏳ Not started |
 
 **Git log (latest):**
 ```
+feat(design): polish UI with glow icon, hourly strip, and metric cards
 feat(edge): handle edge cases — unit_converter, refactor widget conversions, expand tests
 feat(cache): implement offline caching with staleness indicator
 feat(states): add loading, error, and empty state views
@@ -40,7 +41,7 @@ feat(ui): implement search, current weather, and 5-day forecast
 a263dcd feat(setup): scaffold project with folder structure and dark theme
 ```
 
-**Test suite:** 28/28 passing (`flutter test`)
+**Test suite:** 42/42 passing (`flutter test`)
 
 **`flutter analyze` status:** Hangs in sandbox and runner due to Windows sandbox daemon IPC limitations. Run manually in user's external terminal. All `flutter test` unit and widget tests pass clean.
 
@@ -100,16 +101,19 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 | `lib/features/weather/application/search_notifier.dart` | `AsyncNotifier<List<CityModel>>` with 500ms debounce, input validation, and `CancelToken` |
 | `lib/features/weather/application/settings_notifier.dart` | `Notifier<TemperatureUnit>` with `SharedPreferences` unit preference persistence |
 
-### Presentation — Phase 3, 4 & 5 ✅
+### Presentation — Phase 3, 4, 5 & 7 ✅
 
 | File | Purpose |
 |---|---|
-| `lib/features/weather/presentation/weather_screen.dart` | Main screen consuming `weatherNotifierProvider`, `CustomScrollView` layout with conditional `OfflineBanner` |
-| `lib/features/weather/presentation/widgets/weather_header.dart` | Tappable city selector (opens search sheet) + date/time / "Last updated: {time}" subtitle |
-| `lib/features/weather/presentation/widgets/weather_hero.dart` | Weather icon (80px) + oversized temperature (`FittedBox`) + condition text — uses `UnitConverter` |
-| `lib/features/weather/presentation/widgets/metric_card.dart` | Surface card with icon, label, and metric value with units |
+| `lib/features/weather/presentation/weather_screen.dart` | Main screen consuming `weatherNotifierProvider`, `CustomScrollView` layout with conditional `OfflineBanner`, `HourlyStrip`, and 5-day forecast |
+| `lib/features/weather/presentation/widgets/weather_header.dart` | Tappable city selector (opens search sheet) + date/time / "Last updated: {time}" subtitle with Semantics |
+| `lib/features/weather/presentation/widgets/weather_icon_glow.dart` | 160×160 radial gradient backlight per condition group with centered 80px weather icon |
+| `lib/features/weather/presentation/widgets/weather_hero.dart` | Hero icon with `WeatherIconGlow` + oversized temperature (`FittedBox`) + condition text — uses `UnitConverter` |
+| `lib/features/weather/presentation/widgets/hourly_slot.dart` | 64px width slot with 200ms `AnimatedContainer` selection highlight, WMO condition icon, and temperature |
+| `lib/features/weather/presentation/widgets/hourly_strip.dart` | Horizontal scrolling `ListView.separated` of the next ~24 hours with current hour auto-selected |
+| `lib/features/weather/presentation/widgets/metric_card.dart` | Surface card with icon, label, and metric value with units and Semantics |
 | `lib/features/weather/presentation/widgets/metric_cards_row.dart` | Side-by-side Wind and Humidity metric cards — uses `UnitConverter` |
-| `lib/features/weather/presentation/widgets/daily_forecast_row.dart` | Day label, condition icon, min/max temperatures — uses `UnitConverter` |
+| `lib/features/weather/presentation/widgets/daily_forecast_row.dart` | Day label, condition icon, min/max temperatures — uses `UnitConverter` and Semantics |
 | `lib/features/weather/presentation/widgets/daily_forecast_list.dart` | "5 days" container enclosing daily forecast rows separated by dividers |
 | `lib/features/weather/presentation/widgets/loading_state.dart` | Centered `CircularProgressIndicator` with `colorAccentBlue` |
 | `lib/features/weather/presentation/widgets/error_state.dart` | `colorError` icon + `WeatherFailure`-mapped message + `colorAccentBlue` retry button |
@@ -177,6 +181,17 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 - Verified all models have null-safe defaults via `?.toDouble() ?? 0.0` and similar patterns (prior phases — no changes needed).
 - Expanded `test/widget_test.dart` with 13 new unit tests for `UnitConverter` and 5 new tests for `WeatherCodeMapper`. Total: **28/28 tests passing**.
 
+### Phase 7
+- Created `lib/features/weather/presentation/widgets/weather_icon_glow.dart`: 160×160 container with radial gradient backlight centered on the hero icon, matching condition glow color and opacity from `WeatherCodeMapper`.
+- Updated `lib/features/weather/presentation/widgets/weather_hero.dart`: integrates `WeatherIconGlow`, top padding `spaceXxl` (32dp), `FittedBox` on temperature, and semantic labels.
+- Created `lib/features/weather/presentation/widgets/hourly_slot.dart`: 64px width, 200ms `AnimatedContainer` background transition (`colorSurfaceVariant` → `colorAccentBlue` when selected), WMO condition icon, and `Semantics`.
+- Created `lib/features/weather/presentation/widgets/hourly_strip.dart`: lazy horizontal scrolling `ListView.separated` of the next ~24 hours starting from current hour; first slot auto-selected; interactive slot selection.
+- Polished `lib/features/weather/presentation/widgets/metric_card.dart` and `metric_cards_row.dart`: top padding `spaceLg`, full semantic labels for Wind and Humidity, token-based colors and typography.
+- Polished `lib/features/weather/presentation/widgets/daily_forecast_list.dart` and `daily_forecast_row.dart`: container padding, dividers between items, min/max text styling, and screen-reader `Semantics`.
+- Polished `lib/features/weather/presentation/widgets/weather_header.dart`: accessible city tap target with `Semantics`, dropdown chevron, and city-local date formatting.
+- Integrated `HourlyStrip` into `WeatherScreen` `CustomScrollView` between `WeatherHero` and `MetricCardsRow`.
+- Expanded `test/widget_test.dart` with 14 new tests for `WeatherIconGlow`, `WeatherHero`, `HourlySlot`, `HourlyStrip`, `MetricCardsRow`, `DailyForecastList`, and `WeatherHeader`. Total: **42/42 tests passing**.
+
 ---
 
 ## 5. Failed Attempts
@@ -194,25 +209,19 @@ a263dcd feat(setup): scaffold project with folder structure and dark theme
 
 ## 6. Next Steps
 
-### Immediate — Phase 7: Design Polish (Est: 1.0h)
+### Immediate — Phase 8a: Pull-to-Refresh (Est: 0.3h) — BONUS, CUTTABLE
 
-**Goal:** Apply the full design system — glow icon, hourly strip, metric cards, forecast polish.
+**Goal:** Allow users to pull down to refresh the currently selected city's weather data.
 
-**Files to build / update:**
-- `lib/features/weather/presentation/widgets/weather_icon_glow.dart` — radial gradient backlight per condition group
-- `lib/features/weather/presentation/widgets/hourly_strip.dart` + `hourly_slot.dart` — horizontal scrolling, selected slot highlighting
-- Polish `daily_forecast_list.dart` — dividers, min/max styling
-- Polish `weather_header.dart` — dropdown chevron, date formatting
-- Apply all spacing, radius, and typography tokens
-- Add `Semantics` labels to all weather icons
+**Files to update:**
+- `lib/features/weather/presentation/weather_screen.dart` — wrap `CustomScrollView` with `RefreshIndicator` calling `ref.read(weatherNotifierProvider.notifier).fetchWeather(currentCity)`
 
-Commit: `feat(polish): design polish — glow icon, hourly strip, metric cards`
+Commit: `feat(bonus): add pull-to-refresh support`
 
 ### Remaining Phases (in order)
 
 | Phase | Description |
 |---|---|
-| 7 | Design polish — glow icon, hourly strip, metric cards, WCAG check |
 | 8a–8d | Bonus (cuttable in reverse order): pull-to-refresh, unit toggle, search history, location |
 | 9 | README + final `flutter analyze` clean pass |
 

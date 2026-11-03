@@ -20,34 +20,36 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.spaceLg),
-      decoration: BoxDecoration(
-        color: AppColors.colorSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: AppDimensions.weatherIconSmall,
-            color: iconColor,
-          ),
-          const SizedBox(height: AppDimensions.spaceSm),
-          Text(
-            label,
-            style: AppTypography.label,
-          ),
-          const SizedBox(height: AppDimensions.spaceXs),
-          Text(
-            value,
-            style: AppTypography.metricValue,
-          ),
-        ],
+    return Semantics(
+      label: '$label: $value',
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.spaceLg),
+        decoration: BoxDecoration(
+          color: AppColors.colorSurface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: AppDimensions.weatherIconSmall,
+              color: iconColor,
+            ),
+            const SizedBox(height: AppDimensions.spaceSm),
+            Text(
+              label,
+              style: AppTypography.label,
+            ),
+            const SizedBox(height: AppDimensions.spaceXs),
+            Text(
+              value,
+              style: AppTypography.metricValue,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-

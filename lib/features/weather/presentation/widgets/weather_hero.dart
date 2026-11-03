@@ -4,8 +4,10 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/unit_converter.dart';
 import '../../../../core/utils/weather_code_mapper.dart';
 import '../../domain/enums/temperature_unit.dart';
+import 'weather_icon_glow.dart';
 
-/// Focal hero section displaying the weather icon, temperature, and condition.
+/// Focal hero section displaying the weather icon with radial glow backlight,
+/// temperature, and condition label.
 class WeatherHero extends StatelessWidget {
   const WeatherHero({
     super.key,
@@ -26,12 +28,11 @@ class WeatherHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final info = WeatherCodeMapper.map(weatherCode);
-
     final displayTemp = UnitConverter.temperatureValue(temperature, unit);
 
     return Padding(
       padding: const EdgeInsets.only(
-        top: AppDimensions.spaceXl,
+        top: AppDimensions.spaceXxl,
         bottom: AppDimensions.spaceXl,
         left: AppDimensions.spaceXl,
         right: AppDimensions.spaceXl,
@@ -40,19 +41,8 @@ class WeatherHero extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Centered hero weather icon container (160x160)
-          SizedBox(
-            width: AppDimensions.heroIconContainerSize,
-            height: AppDimensions.heroIconContainerSize,
-            child: Center(
-              child: Icon(
-                info.icon,
-                size: AppDimensions.heroIconSize,
-                color: info.tintColor,
-                semanticLabel: info.conditionText,
-              ),
-            ),
-          ),
+          // Centered hero weather icon with radial glow backlight
+          WeatherIconGlow(weatherCode: weatherCode),
           const SizedBox(height: AppDimensions.spaceSm),
           // Focal temperature wrapped in FittedBox to prevent overflow at 2x text scale
           FittedBox(
@@ -74,4 +64,3 @@ class WeatherHero extends StatelessWidget {
     );
   }
 }
-

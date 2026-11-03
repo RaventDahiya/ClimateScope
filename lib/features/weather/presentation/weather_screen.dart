@@ -8,6 +8,7 @@ import 'sheets/search_bottom_sheet.dart';
 import 'widgets/daily_forecast_list.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/error_state.dart';
+import 'widgets/hourly_strip.dart';
 import 'widgets/loading_state.dart';
 import 'widgets/metric_cards_row.dart';
 import 'widgets/offline_banner.dart';
@@ -111,6 +112,12 @@ class WeatherScreen extends ConsumerWidget {
                   child: WeatherHero(
                     weatherCode: weather.current.weatherCode,
                     temperature: weather.current.temperature,
+                    unit: unit,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: HourlyStrip(
+                    hourlyForecasts: weather.hourlyForecasts,
                     unit: unit,
                   ),
                 ),
