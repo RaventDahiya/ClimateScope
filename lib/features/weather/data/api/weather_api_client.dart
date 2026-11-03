@@ -57,3 +57,4 @@ final class WeatherApiClient {
     return WeatherDataModel.fromJson(data, city);
   }
 }
+

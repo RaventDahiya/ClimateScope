@@ -228,3 +228,4 @@ abstract final class WeatherCodeMapper {
     };
   }
 }
+

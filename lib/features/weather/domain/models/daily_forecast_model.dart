@@ -62,3 +62,4 @@ final class DailyForecastModel {
       'DailyForecastModel(date: $date, weatherCode: $weatherCode, '
       'tempMin: $tempMin, tempMax: $tempMax)';
 }
+

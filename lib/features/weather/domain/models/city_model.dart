@@ -50,3 +50,4 @@ final class CityModel {
       'CityModel(name: $name, latitude: $latitude, longitude: $longitude, '
       'country: $country, admin1: $admin1)';
 }
+

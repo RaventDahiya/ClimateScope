@@ -34,3 +34,4 @@ final class CurrentWeatherModel {
       'CurrentWeatherModel(temperature: $temperature, humidity: $humidity, '
       'weatherCode: $weatherCode, windSpeed: $windSpeed)';
 }
+

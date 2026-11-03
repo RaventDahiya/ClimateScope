@@ -163,3 +163,4 @@ final class WeatherDataModel {
       'WeatherDataModel(city: ${city.name}, timezone: $timezone, '
       'lastUpdated: $lastUpdated)';
 }
+

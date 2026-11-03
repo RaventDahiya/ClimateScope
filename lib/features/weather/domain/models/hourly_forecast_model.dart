@@ -51,3 +51,4 @@ final class HourlyForecastModel {
       'HourlyForecastModel(time: $time, temperature: $temperature, '
       'weatherCode: $weatherCode)';
 }
+

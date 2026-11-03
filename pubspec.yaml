@@ -12,9 +12,12 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^2.6.1
   dio: ^5.8.0+1
-  shared_preferences: ^2.5.2
+  shared_preferences: ^2.2.2
   intl: ^0.20.2
   cupertino_icons: ^1.0.8
+
+dependency_overrides:
+  shared_preferences_android: 2.3.4
 
 dev_dependencies:
   flutter_test:

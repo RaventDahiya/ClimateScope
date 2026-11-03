@@ -38,3 +38,4 @@ final class CacheFailure extends WeatherFailure {
 final class UnknownFailure extends WeatherFailure {
   const UnknownFailure([super.message = 'Something went wrong. Please try again.']);
 }
+

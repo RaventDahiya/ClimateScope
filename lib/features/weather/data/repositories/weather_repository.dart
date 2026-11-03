@@ -79,3 +79,4 @@ final class WeatherRepository {
     return const ServerFailure();
   }
 }
+
